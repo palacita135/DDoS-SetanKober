@@ -10,7 +10,7 @@ Attack
 
 All module and Tools will install automaticly inside the script. before start the program:
 
-    find line 132
+    find line 154
     Replace path the ua.txt from inside the SetanKober folder
 
 =============================================================================
