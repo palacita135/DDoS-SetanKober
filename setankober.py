@@ -94,7 +94,7 @@ ascii_art = """
 
 Setan Kober | We Are United | DDOS attack Layer 7
 
-Author: DirtyHeroes
+Author: DirtyHeroes ꦗꦺꦴꦲꦂ ꦥꦭꦕꦶꦠ
 
 """
 
@@ -151,7 +151,7 @@ def test_proxy(proxy):
 
 # Load User-Agent strings from a file
 def add_useragent():
-    useragent_file = "REPLACE_PATH/DDoS-SetanKober/ua.txt"
+    useragent_file = "/home/whoami/DDOS/SetanKober/ua.txt"
 
     try:
         with open(useragent_file, "r") as fp:
