@@ -22,3 +22,8 @@ TERMUX User
     pkg install mpv sox
     python3 proxy-scraper.py # for forking proxy and made proxies.txt
     python3 setankober.py # start the program
+
+The kober.py is for windows user
+install
+
+    pip install simpleaudio
