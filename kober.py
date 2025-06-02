@@ -246,7 +246,16 @@ def main():
                 print("Website is ACTIVE." if status else "Website is NOT reachable.")
                 input("Press Enter to continue...")
         elif choice == "2":
-            num_threads = int(input("Enter number of threads: "))
+            try:
+                user_input = int(input("Enter number of threads: "))
+                if user_input > 0:
+                    num_threads = user_input
+                else:
+                    print("Please enter a number greater than 0.")
+                    input("Press Enter to continue...")
+            except ValueError:
+                print("Invalid input. Please enter a valid number.")
+                input("Press Enter to continue...")
         elif choice == "3":
             proxy_enabled = not proxy_enabled
         elif choice == "4":
